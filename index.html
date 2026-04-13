@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CutMy 工作记录</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h1 span {
+      background: #2c3e50;
+      color: white;
+      font-size: 14px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .stats {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .refresh-btn {
+      background: #2c3e50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .refresh-btn:hover {
+      background: #1a252f;
+    }
+
+    /* 分区标题 */
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 20px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title .count {
+      background: #e0e0e0;
+      color: #666;
+      font-size: 14px;
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+
+    .section-title.pending {
+      color: #92400E;
+      border-bottom-color: #F59E0B;
+    }
+
+    .section-title.completed {
+      color: #065F46;
+      border-bottom-color: #10B981;
+    }
+
+    .record-card {
+      background: white;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e0e0e0;
+    }
+
+    .record-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .record-id {
+      font-weight: 700;
+      color: #2c3e50;
+      font-family: monospace;
+    }
+
+    .record-status {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .status-未收 {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .status-部分 {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+
+    .status-已收 {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .status-完成 {
+      background: #2c3e50;
+      color: white;
+    }
+
+    .record-date {
+      margin-left: auto;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .record-body {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 16px;
+    }
+
+    .record-item {
+      display: flex;
+      font-size: 14px;
+    }
+
+    .record-label {
+      color: #888;
+      width: 75px;
+      flex-shrink: 0;
+    }
+
+    .record-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    .record-value.highlight {
+      color: #c0392b;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .record-note {
+      grid-column: span 2;
+      background: #f9f9f9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .record-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-edit {
+      background: #3B82F6;
+      color: white;
+    }
+
+    .btn-edit:hover {
+      background: #2563EB;
+    }
+
+    .btn-delete {
+      background: #DC2626;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background: #B91C1C;
+    }
+
+    .btn-complete {
+      background: #10B981;
+      color: white;
+    }
+
+    .btn-complete:hover {
+      background: #059669;
+    }
+
+    .btn-pending {
+      background: #F59E0B;
+      color: white;
+    }
+
+    .btn-pending:hover {
+      background: #D97706;
+    }
+
+    .loading {
+      text-align: center;
+      color: #7f8c8d;
+      padding: 40px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #95a5a6;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+    }
+
+    /* 编辑弹窗 */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 550px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #3B82F6;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .modal-actions .btn {
+      flex: 1;
+      padding: 12px;
+    }
+
+    .btn-save {
+      background: #10B981;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #059669;
+    }
+
+    .btn-cancel {
+      background: #9CA3AF;
+      color: white;
+    }
+
+    .btn-cancel:hover {
+      background: #6B7280;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2c3e50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 2000;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    .toast.error {
+      background: #DC2626;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>
+    📊 CutMy 工作记录
+    <span id="total-badge">0 条</span>
+  </h1>
+
+  <div class="toolbar">
+    <div class="stats" id="stats">加载中...</div>
+    <button class="refresh-btn" onclick="loadRecords()">🔄 刷新数据</button>
+  </div>
+
+  <!-- 未处理订单区域 -->
+  <div class="section-title pending">
+    ⏳ 未处理订单
+    <span class="count" id="pending-count">0</span>
+  </div>
+  <div id="pending-list">
+    <div class="loading">加载中...</div>
+  </div>
+
+  <!-- 已处理订单区域 -->
+  <div class="section-title completed">
+    ✅ 已处理订单
+    <span class="count" id="completed-count">0</span>
+  </div>
+  <div id="completed-list">
+    <div class="loading">加载中...</div>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div class="modal" id="editModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content">
+      <h3>✏️ 编辑记录</h3>
+      <form id="editForm" onsubmit="saveEdit(event)">
+        <input type="hidden" id="edit-id" />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>客户名称 *</label>
+            <input type="text" id="edit-client" required />
+          </div>
+          <div class="form-group">
+            <label>联系方式</label>
+            <input type="text" id="edit-contact" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>具体要求</label>
+          <textarea id="edit-req" rows="2"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>总金额 *</label>
+            <input type="number" id="edit-total" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label>已收金额</label>
+            <input type="number" id="edit-paid" step="0.01" value="0" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>款项状态</label>
+            <select id="edit-paidStatus">
+              <option value="未收">未收</option>
+              <option value="部分">部分</option>
+              <option value="已收">已收</option>
+              <option value="完成">完成</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>生产文件</label>
+            <select id="edit-prodStatus">
+              <option value="未完成">未完成</option>
+              <option value="完成">完成</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>处理状态</label>
+            <select id="edit-processStatus">
+              <option value="pending">未处理</option>
+              <option value="completed">已处理</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>板材情况</label>
+          <input type="text" id="edit-board" />
+        </div>
+
+        <div class="form-group">
+          <label>地址</label>
+          <input type="text" id="edit-address" />
+        </div>
+
+        <div class="form-group">
+          <label>备注</label>
+          <textarea id="edit-note" rows="2"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>开单时间 *</label>
+            <input type="date" id="edit-date" required />
+          </div>
+          <div class="form-group">
+            <label>交货时间</label>
+            <input type="date" id="edit-delivery" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-cancel" onclick="closeModal()">取消</button>
+          <button type="submit" class="btn btn-save">💾 保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let records = [];
+
+    // ========== 加载记录 ==========
+    async function loadRecords() {
+      document.getElementById('pending-list').innerHTML = '<div class="loading">加载中...</div>';
+      document.getElementById('completed-list').innerHTML = '<div class="loading">加载中...</div>';
+
+      try {
+        const response = await fetch('/.netlify/functions/getRecords');
+        const data = await response.json();
+        records = data || [];
+        renderRecords();
+        showToast(`已加载 ${records.length} 条记录`);
+      } catch (error) {
+        console.error('加载失败:', error);
+        document.getElementById('pending-list').innerHTML = '<div class="empty">❌ 加载失败</div>';
+        document.getElementById('completed-list').innerHTML = '<div class="empty">❌ 加载失败</div>';
+        document.getElementById('stats').textContent = '连接失败';
+        document.getElementById('total-badge').textContent = '0 条';
+      }
+    }
+
+    // ========== 渲染记录 ==========
+    function renderRecords() {
+      // 分离未处理和已处理
+      const pendingRecords = records.filter(r => r.processStatus !== 'completed');
+      const completedRecords = records.filter(r => r.processStatus === 'completed');
+
+      // 更新统计
+      const totalAmount = records.reduce((sum, r) => sum + (parseFloat(r.total) || 0), 0);
+      const totalPaid = records.reduce((sum, r) => sum + (parseFloat(r.paid) || 0), 0);
+
+      document.getElementById('stats').textContent = `总金额 ¥${totalAmount.toFixed(2)}  |  已收 ¥${totalPaid.toFixed(2)}`;
+      document.getElementById('total-badge').textContent = `${records.length} 条`;
+      document.getElementById('pending-count').textContent = pendingRecords.length;
+      document.getElementById('completed-count').textContent = completedRecords.length;
+
+      // 渲染未处理
+      renderList('pending-list', pendingRecords, true);
+
+      // 渲染已处理
+      renderList('completed-list', completedRecords, false);
+    }
+
+    function renderList(containerId, list, isPending) {
+      const container = document.getElementById(containerId);
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="empty">📭 暂无订单</div>';
+        return;
+      }
+
+      const sortedList = [...list].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+      container.innerHTML = sortedList.map(record => {
+        const status = record.paidStatus || '未收';
+        return `
+      <div class="record-card">
+        <div class="record-header">
+          <span class="record-id">#${record.id}</span>
+          <span class="record-status status-${status}">${status}</span>
+          <span class="record-date">${record.date || '—'}</span>
+        </div>
+        <div class="record-body">
+          <div class="record-item">
+            <span class="record-label">客户</span>
+            <span class="record-value">${record.client || '—'}${record.contact ? ' · ' + record.contact : ''}</span>
+          </div>
+          <div class="record-item">
+            <span class="record-label">板材</span>
+            <span class="record-value">${record.board || '—'}</span>
+          </div>
+          <div class="record-item">
+            <span class="record-label">总金额</span>
+            <span class="record-value highlight">¥${record.total || 0}</span>
+          </div>
+          <div class="record-item">
+            <span class="record-label">已收</span>
+            <span class="record-value">¥${record.paid || 0}</span>
+          </div>
+          <div class="record-item">
+            <span class="record-label">生产文件</span>
+            <span class="record-value">${record.prodStatus || '未完成'}</span>
+          </div>
+          <div class="record-item">
+            <span class="record-label">交货</span>
+            <span class="record-value">${record.delivery || '待定'}</span>
+          </div>
+          ${record.req ? `
+          <div class="record-item" style="grid-column: span 2;">
+            <span class="record-label">要求</span>
+            <span class="record-value">${record.req}</span>
+          </div>` : ''}
+          ${record.note ? `<div class="record-note">📌 ${record.note}</div>` : ''}
+          ${record.address ? `
+          <div class="record-item" style="grid-column: span 2;">
+            <span class="record-label">地址</span>
+            <span class="record-value">${record.address}</span>
+          </div>` : ''}
+        </div>
+        <div class="record-actions">
+          <button class="btn btn-edit" onclick="openEdit(${record.id})">✏️ 编辑</button>
+          <button class="btn btn-delete" onclick="deleteRecord(${record.id})">🗑️ 删除</button>
+          ${isPending ?
+            `<button class="btn btn-complete" onclick="markAsCompleted(${record.id})">✅ 标记已处理</button>` :
+            `<button class="btn btn-pending" onclick="markAsPending(${record.id})">⏳ 标记未处理</button>`
+          }
+        </div>
+      </div>
+    `;
+      }).join('');
+    }
+
+    // ========== 标记已处理 ==========
+    async function markAsCompleted(id) {
+      await updateProcessStatus(id, 'completed');
+    }
+
+    // ========== 标记未处理 ==========
+    async function markAsPending(id) {
+      await updateProcessStatus(id, 'pending');
+    }
+
+    // ========== 更新处理状态 ==========
+    async function updateProcessStatus(id, status) {
+      showToast(status === 'completed' ? '标记为已处理...' : '标记为未处理...');
+
+      try {
+        const response = await fetch('/.netlify/functions/updateRecord', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, processStatus: status })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showToast(status === 'completed' ? '✅ 已标记为已处理' : '✅ 已标记为未处理');
+          loadRecords();
+        } else {
+          showToast('❌ 操作失败', 'error');
+        }
+      } catch (error) {
+        console.error('操作失败:', error);
+        showToast('❌ 网络错误', 'error');
+      }
+    }
+
+    // ========== 打开编辑弹窗 ==========
+    function openEdit(id) {
+      const record = records.find(r => r.id === id);
+      if (!record) return;
+
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-client').value = record.client || '';
+      document.getElementById('edit-contact').value = record.contact || '';
+      document.getElementById('edit-req').value = record.req || '';
+      document.getElementById('edit-total').value = record.total || 0;
+      document.getElementById('edit-paid').value = record.paid || 0;
+      document.getElementById('edit-paidStatus').value = record.paidStatus || '未收';
+      document.getElementById('edit-prodStatus').value = record.prodStatus || '未完成';
+      document.getElementById('edit-processStatus').value = record.processStatus || 'pending';
+      document.getElementById('edit-board').value = record.board || '';
+      document.getElementById('edit-address').value = record.address || '';
+      document.getElementById('edit-note').value = record.note || '';
+      document.getElementById('edit-date').value = record.date || '';
+      document.getElementById('edit-delivery').value = record.delivery || '';
+
+      document.getElementById('editModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('show');
+    }
+
+    // ========== 保存编辑 ==========
+    async function saveEdit(e) {
+      e.preventDefault();
+
+      const formData = {
+        id: document.getElementById('edit-id').value,
+        client: document.getElementById('edit-client').value,
+        contact: document.getElementById('edit-contact').value,
+        req: document.getElementById('edit-req').value,
+        total: document.getElementById('edit-total').value,
+        paid: document.getElementById('edit-paid').value,
+        paidStatus: document.getElementById('edit-paidStatus').value,
+        prodStatus: document.getElementById('edit-prodStatus').value,
+        processStatus: document.getElementById('edit-processStatus').value,
+        board: document.getElementById('edit-board').value,
+        address: document.getElementById('edit-address').value,
+        note: document.getElementById('edit-note').value,
+        date: document.getElementById('edit-date').value,
+        delivery: document.getElementById('edit-delivery').value
+      };
+
+      showToast('保存中...');
+
+      try {
+        const response = await fetch('/.netlify/functions/updateRecord', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('✅ 保存成功');
+          closeModal();
+          loadRecords();
+        } else {
+          showToast('❌ 保存失败: ' + (result.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        console.error('保存失败:', error);
+        showToast('❌ 网络错误', 'error');
+      }
+    }
+
+    // ========== 删除记录 ==========
+    async function deleteRecord(id) {
+      if (!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
+
+      showToast('删除中...');
+
+      try {
+        const response = await fetch('/.netlify/functions/deleteRecord', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          showToast('✅ 删除成功');
+          loadRecords();
+        } else {
+          showToast('❌ 删除失败: ' + (result.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        console.error('删除失败:', error);
+        showToast('❌ 网络错误', 'error');
+      }
+    }
+
+    // ========== 提示 ==========
+    function showToast(msg, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast' + (type ? ' ' + type : '');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // 初始化
+    loadRecords();
+    setInterval(loadRecords, 30000);
+  </script>
+</body>
+
+</html>

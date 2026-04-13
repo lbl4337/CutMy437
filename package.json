@@ -1,0 +1,8 @@
+{
+  "name": "cutmy-shop",
+  "version": "1.0.0",
+  "description": "CutMy 木材定制工作记录",
+  "dependencies": {
+    "mysql2": "^3.6.0"
+  }
+}

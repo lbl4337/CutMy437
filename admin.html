@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CutMy 工作登记</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #2c3e50;
+    }
+
+    form {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    div {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #2c3e50;
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #1a252f;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>📋 CutMy 工作登记</h1>
+  <form id="work-form">
+    <div>
+      <label>客户名称：</label>
+      <input type="text" id="client-name" required>
+    </div>
+    <div>
+      <label>具体要求：</label>
+      <textarea id="work-req" rows="3"></textarea>
+    </div>
+    <div>
+      <label>总金额：</label>
+      <input type="number" id="total" step="0.01" required>
+    </div>
+    <div>
+      <label>已收金额：</label>
+      <input type="number" id="paid" step="0.01" value="0">
+    </div>
+    <div>
+      <label>款项状态：</label>
+      <select id="paid-status">
+        <option value="未收">未收</option>
+        <option value="部分">部分</option>
+        <option value="已收">已收</option>
+      </select>
+    </div>
+    <div>
+      <label>生产文件：</label>
+      <select id="prod-status">
+        <option value="未完成">未完成</option>
+        <option value="完成">完成</option>
+      </select>
+    </div>
+    <div>
+      <label>板材情况：</label>
+      <input type="text" id="board">
+    </div>
+    <div>
+      <label>地址：</label>
+      <input type="text" id="address">
+    </div>
+    <div>
+      <label>联系方式：</label>
+      <input type="tel" id="contact">
+    </div>
+    <div>
+      <label>备注：</label>
+      <textarea id="note" rows="2"></textarea>
+    </div>
+    <div>
+      <label>开单时间：</label>
+      <input type="date" id="date" required>
+    </div>
+    <div>
+      <label>交货时间：</label>
+      <input type="date" id="delivery">
+    </div>
+    <button type="submit">💾 保存记录</button>
+  </form>
+
+  <script>
+    document.getElementById('date').valueAsDate = new Date();
+
+    document.getElementById('work-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const formData = {
+        client: document.getElementById('client-name').value,
+        req: document.getElementById('work-req').value,
+        total: document.getElementById('total').value,
+        paid: document.getElementById('paid').value,
+        paidStatus: document.getElementById('paid-status').value,
+        prodStatus: document.getElementById('prod-status').value,
+        board: document.getElementById('board').value,
+        address: document.getElementById('address').value,
+        contact: document.getElementById('contact').value,
+        note: document.getElementById('note').value,
+        date: document.getElementById('date').value,
+        delivery: document.getElementById('delivery').value
+      };
+
+      try {
+        const response = await fetch('/.netlify/functions/submitRecord', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (result.message) {
+          alert('✅ 记录已保存');
+        } else {
+          alert('❌ 保存失败：' + (result.error || '未知错误'));
+        }
+      } catch (error) {
+        console.error('提交出错:', error);
+        alert('❌ 网络错误，请稍后重试');
+      }
+    });
+  </script>
+</body>
+
+</html>
