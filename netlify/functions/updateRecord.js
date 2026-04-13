@@ -20,30 +20,43 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers };
   }
 
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: '只支持 POST' }) };
-  }
-
   try {
     const data = JSON.parse(event.body);
+    console.log('收到更新请求:', data);
 
+    // 只更新 processStatus（用于标记已处理/未处理）
+    if (data.processStatus && !data.client) {
+      await new Promise((resolve, reject) => {
+        pool.query(
+          'UPDATE work_records SET processStatus = ? WHERE id = ?',
+          [data.processStatus, data.id],
+          (err, result) => err ? reject(err) : resolve(result)
+        );
+      });
+      return {
+        statusCode: 200,
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true })
+      };
+    }
+
+    // 完整更新
     const sql = `
       UPDATE work_records SET 
         client = ?, req = ?, total = ?, paid = ?, paidStatus = ?, 
-        prodStatus = ?, board = ?, address = ?, contact = ?, note = ?, 
-        date = ?, delivery = ?
+        prodStatus = ?, processStatus = ?, board = ?, address = ?, 
+        contact = ?, note = ?, date = ?, delivery = ?
       WHERE id = ?
     `;
-
-    const values = [
-      data.client, data.req || null, data.total, data.paid || 0,
-      data.paidStatus || '未收', data.prodStatus || '未完成',
-      data.board || null, data.address || null, data.contact || null,
-      data.note || null, data.date, data.delivery || null, data.id
-    ];
-
+    
     await new Promise((resolve, reject) => {
-      pool.query(sql, values, (err, result) => err ? reject(err) : resolve(result));
+      pool.query(sql, [
+        data.client, data.req || null, data.total, data.paid || 0,
+        data.paidStatus || '未收', data.prodStatus || '未完成',
+        data.processStatus || 'pending',
+        data.board || null, data.address || null, data.contact || null,
+        data.note || null, data.date, data.delivery || null, data.id
+      ], (err, result) => err ? reject(err) : resolve(result));
     });
 
     return {
