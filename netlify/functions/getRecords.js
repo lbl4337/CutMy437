@@ -1,65 +1,40 @@
 const mysql = require('mysql2');
 
-const pool = mysql.createPool({
-  host: 'mysql-5456f0d-cutmy.l.aivencloud.com',
-  port: 11636,
-  user: 'avnadmin',
-  password: 'AVNS_ePlD8mFxi4r3Jjk-xV_',
-  database: 'defaultdb',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  ssl: { rejectUnauthorized: false }
-});
-
-exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
-    };
-  }
-
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: '只支持 GET 请求' })
-    };
-  }
-
-  try {
-    const sql = 'SELECT * FROM work_records ORDER BY id DESC';
-
-    const results = await new Promise((resolve, reject) => {
-      pool.query(sql, (error, results) => {
-        if (error) reject(error);
-        else resolve(results);
-      });
+let pool;
+function getPool() {
+  if (!pool) {
+    pool = mysql.createPool({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      ssl: { rejectUnauthorized: false }
     });
+  }
+  return pool;
+}
+const db = getPool();
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify(results)
-    };
-
-  } catch (error) {
-    console.error('查询失败:', error);
-    return {
-      statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({ error: '查询失败' })
-    };
+exports.handler = async () => {
+  try {
+    const rows = await query('SELECT * FROM work_records ORDER BY id DESC');
+    return { statusCode: 200, headers: cors(), body: JSON.stringify(rows) };
+  } catch (e) {
+    return err(e);
   }
 };
+
+function query(sql) {
+  return new Promise((res, rej) => {
+    db.query(sql, (e, r) => e ? rej(e) : res(r));
+  });
+}
+
+function cors() {
+  return { 'Access-Control-Allow-Origin': '*' };
+}
+
+function err(e) {
+  return { statusCode: 500, headers: cors(), body: JSON.stringify({ error: e.message }) };
+}
